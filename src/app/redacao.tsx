@@ -2,6 +2,7 @@ import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableO
 import { Link, router } from "expo-router";
 import { DrawerToggleButton } from "@react-navigation/drawer"
 import { useState } from 'react';
+import { servicos } from '../servicos';
 
 const profile = require('../img/profile.png');
 const lixo = require('../img/lixo.png');
@@ -9,8 +10,10 @@ const lixo = require('../img/lixo.png');
 const LANGUAGE_TOOL_API = 'https://api.languagetool.org/v2/check';
 
 export default function Ranking() {
+  const [titulo, setTitulo] = useState('');
   const [essayText, setEssayText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
   const [showResults, setShowResults] = useState(false);
   
@@ -190,9 +193,85 @@ export default function Ranking() {
   };
 
   const clearAll = () => {
+    setTitulo('');
     setEssayText('');
     setErrorCount(0);
     setShowResults(false);
+  };
+
+  const salvarRedacao = async () => {
+    if (!titulo.trim()) {
+      Alert.alert('Atenção', 'Por favor, preencha o título da redação');
+      return;
+    }
+
+    if (!essayText.trim()) {
+      Alert.alert('Atenção', 'Por favor, preencha o conteúdo da redação');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      // Obter o usuário atual
+      const user = await servicos.getUsuarioAtual();
+      
+      if (!user || !user.id) {
+        Alert.alert('Erro', 'Usuário não encontrado. Por favor, faça login novamente.');
+        setSaving(false);
+        return;
+      }
+
+      // Buscar o ID do aluno na tabela alunos usando o user_id
+      const respostaAluno = await servicos.buscarComFiltros('alunos', { user_id: user.id });
+      
+      if (!respostaAluno.success || !respostaAluno.data || respostaAluno.data.length === 0) {
+        Alert.alert('Erro', 'Aluno não encontrado. Por favor, verifique seu cadastro.');
+        setSaving(false);
+        return;
+      }
+
+      const aluno = respostaAluno.data[0];
+      const idAluno = aluno.user_id;
+
+      const resposta = await servicos.inserirRegistro('redacoes', {
+        id_aluno: idAluno,
+        titulo: titulo.trim(),
+        conteudo_redacao: essayText.trim(),
+        nota: 0, 
+        corrigida: false,
+      });
+
+      if (resposta.success) {
+        Alert.alert(
+          'Sucesso!',
+          'Redação salva com sucesso!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setTitulo('');
+                setEssayText('');
+                setErrorCount(0);
+                setShowResults(false);
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Erro ao Salvar',
+          resposta.error || 'Ocorreu um erro ao salvar a redação. Tente novamente.'
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Erro ao Salvar',
+        error.message || 'Ocorreu um erro inesperado. Tente novamente.'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -220,6 +299,23 @@ export default function Ranking() {
           <Text style={styles.brain}>Redação</Text>
         </View>
 
+        <View style={styles.titleContainer}>
+          <Text style={styles.label}>Título da Redação</Text>
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Digite o título da redação"
+            placeholderTextColor="#555454ff"
+            value={titulo}
+            onChangeText={setTitulo}
+            editable={!loading && !saving}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            keyboardType="default"
+            returnKeyType="next"
+          />
+        </View>
+
         <View style={styles.essayContainer}>
           <TextInput
             style={styles.essayInput}
@@ -232,16 +328,21 @@ export default function Ranking() {
               setShowResults(false);
             }}
             textAlignVertical="top"
+            editable={!loading && !saving}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            keyboardType="default"
           />
         </View>
         
         <View style={styles.buttonsContainer}>
           <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]} 
+            style={[styles.button, (loading || saving) && styles.buttonDisabled]} 
             onPress={checkEssay}
-            disabled={loading}
+            disabled={loading || saving}
           >
-            {loading ? (
+            {(loading || saving) ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
               <Text style={styles.buttonText}>CORRIGIR REDAÇÃO</Text>
@@ -255,6 +356,22 @@ export default function Ranking() {
             <Image source={lixo} style={styles.lixoImage} resizeMode="contain" />
           </TouchableOpacity>
         </View>
+
+        {showResults && errorCount === 0 && (
+          <View style={styles.enviarContainer}>
+            <TouchableOpacity 
+              style={[styles.buttonEnviar, saving && styles.buttonDisabled]} 
+              onPress={salvarRedacao}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.buttonText}>ENVIAR REDAÇÃO</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         <ScrollView 
           style={styles.resultsScrollView} 
@@ -321,6 +438,26 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen ? 15 : 20,
     textAlign: 'center',
   },
+  titleContainer: {
+    width: '100%',
+    marginBottom: isSmallScreen ? 15 : 20,
+  },
+  label: {
+    fontSize: isSmallScreen ? 14 : 16,
+    fontWeight: 'bold',
+    color: '#000428',
+    marginBottom: 8,
+  },
+  titleInput: {
+    width: '100%',
+    height: isSmallScreen ? 45 : 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: isSmallScreen ? 12 : 15,
+    fontSize: isSmallScreen ? 14 : 16,
+    backgroundColor: '#eeeaeaff',
+  },
   drawerToggleContainer: {
     position: 'absolute',
     top: isSmallScreen ? 5 : 7,
@@ -368,6 +505,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: isSmallScreen ? 80 : 100,
+    minHeight: 45,
+  },
+  enviarContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: isSmallScreen ? 10 : 15,
+    marginBottom: isSmallScreen ? 8 : 10,
+  },
+  buttonEnviar: {
+    backgroundColor: '#4caf50',
+    height: isSmallScreen ? 45 : 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: isSmallScreen ? 200 : 250,
     minHeight: 45,
   },
   buttonDisabled: {
