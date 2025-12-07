@@ -10,6 +10,7 @@ const olhoFechado = require('../img/olho-fechado.png');
 
 export default function CadastroProfessor() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmaSenha, setConfirmaSenha] = useState('');
@@ -29,7 +30,7 @@ export default function CadastroProfessor() {
   };
 
   const cadastrarProfessor = async () => {
-    if (!email || !senha || !confirmaSenha) {
+    if (!nome || !email || !senha || !confirmaSenha) {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos');
       return;
     }
@@ -42,7 +43,7 @@ export default function CadastroProfessor() {
     setLoading(true);
 
     try {
-      const resposta = await servicos.cadastrarUsuario(email, senha, 'P');
+      const resposta = await servicos.cadastrarUsuario(email, senha, 'P', nome);
 
       if (resposta.success) {
         Alert.alert(
@@ -75,12 +76,12 @@ export default function CadastroProfessor() {
   }
 
   useEffect(() => {
-    if (senha !== confirmaSenha) {
+    if (!nome || !email || !senha || !confirmaSenha || senha !== confirmaSenha) {
       setTravaEntrar(true)
     } else {
       setTravaEntrar(false)
     }
-  }, [senha, confirmaSenha])
+  }, [nome, email, senha, confirmaSenha])
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -100,6 +101,17 @@ export default function CadastroProfessor() {
         </View>
 
         <View style={styles.formContainer}>
+          <Text style={styles.label}>Nome</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu nome"
+            placeholderTextColor="#999"
+            autoCapitalize="words"
+            onChangeText={nome => setNome(nome)}
+            value={nome}
+          />
+          
           <Text style={styles.label}>Email</Text>
           
           <TextInput
@@ -109,6 +121,7 @@ export default function CadastroProfessor() {
             keyboardType="email-address"
             autoCapitalize="none"
             onChangeText={email => setEmail(email)}
+            value={email}
           />
           
           <Text style={styles.label}>Senha</Text>
@@ -119,6 +132,7 @@ export default function CadastroProfessor() {
               placeholderTextColor="#999"
               secureTextEntry={!mostrarSenha}
               onChangeText={senha => setSenha(senha)}
+              value={senha}
             />
             <TouchableOpacity 
               style={styles.olhoButton} 
@@ -138,6 +152,7 @@ export default function CadastroProfessor() {
             placeholderTextColor="#999"
             secureTextEntry={true}
             onChangeText={senha => setConfirmaSenha(senha)}
+            value={confirmaSenha}
           />
 
           <TouchableOpacity

@@ -14,13 +14,14 @@ export async function loginUsuario(email: string, password: string) {
   return { success: true, data };
 }
 
-export async function cadastrarUsuario(email: string, password: string, type?: string) {
+export async function cadastrarUsuario(email: string, password: string, type?: string, nome?: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         type: type || '',
+        nome: nome || '',
       },
     },
   });
