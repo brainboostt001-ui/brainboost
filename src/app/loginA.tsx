@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Link, router } from "expo-router";
 import { useState } from 'react';
 import { servicos } from '../servicos';
@@ -85,8 +85,12 @@ export default function LoginAluno() {
           <Text style={styles.brain}>BrainBoost</Text>
         </View>
 
-       
-        <View style={styles.formContainer}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContainer}>
           <Text style={styles.label}>Email</Text>
           
           <TextInput
@@ -146,7 +150,6 @@ export default function LoginAluno() {
           </TouchableOpacity>
         </View>
 
-      
         <Link href='../cadastroA' asChild>
           <TouchableOpacity >
             <View>
@@ -154,6 +157,7 @@ export default function LoginAluno() {
             </View>
           </TouchableOpacity>  
         </Link>  
+        </ScrollView>
 
       </View>
     </SafeAreaView>
@@ -320,5 +324,11 @@ const styles = StyleSheet.create({
     bottom: 12,
 
   },
-  
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
 });

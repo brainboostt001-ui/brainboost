@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Link, router } from "expo-router";
 import { useEffect, useState } from 'react';
 import { servicos } from '../servicos';
@@ -100,7 +100,12 @@ export default function CadastroProfessor() {
           <Text style={styles.brain}>BrainBoost</Text>
         </View>
 
-        <View style={styles.formContainer}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContainer}>
           <Text style={styles.label}>Nome</Text>
           
           <TextInput
@@ -177,13 +182,14 @@ export default function CadastroProfessor() {
           </TouchableOpacity>
         </View>
         
-        <Link href='../loginP' asChild>
-          <TouchableOpacity >
-             <View>
-                <Text style={styles.cadastro}>Já tenho login</Text>
-              </View>
-          </TouchableOpacity>  
-        </Link>
+          <Link href='../loginP' asChild>
+            <TouchableOpacity style={styles.linkContainer}>
+               <View>
+                  <Text style={styles.cadastro}>Já tenho login</Text>
+                </View>
+            </TouchableOpacity>  
+          </Link>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -311,6 +317,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textDecorationLine: 'underline',
     color: '#000428',
+    textAlign: 'center',
   },
   buttonGoogle: {
     color: '#000428',
@@ -339,5 +346,16 @@ const styles = StyleSheet.create({
     height: 30,
     right: 60,
     bottom: 12,
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  linkContainer: {
+    alignItems: 'center',
+    width: '100%',
   },
 });

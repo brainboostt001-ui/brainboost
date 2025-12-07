@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Link, router } from "expo-router";
 import { useState } from 'react';
 import { servicos } from '../servicos';
@@ -84,8 +84,12 @@ export default function LoginProfessor() {
           <Text style={styles.brain}>BrainBoost</Text>
         </View>
 
-        
-        <View style={styles.formContainer}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formContainer}>
           <Text style={styles.label}>Email</Text>
           
           <TextInput
@@ -145,14 +149,15 @@ export default function LoginProfessor() {
           </TouchableOpacity>
 
           
-          <Link href='../cadastroP' asChild>
-            <TouchableOpacity>
-              <View>
-                <Text style={styles.cadastro}>Não tenho conta</Text>
-              </View>
-            </TouchableOpacity>  
-          </Link>  
-        </View>
+            <Link href='../cadastroP' asChild>
+              <TouchableOpacity>
+                <View>
+                  <Text style={styles.cadastro}>Não tenho conta</Text>
+                </View>
+              </TouchableOpacity>  
+            </Link>  
+          </View>
+        </ScrollView>
 
       </View>
     </SafeAreaView>
@@ -318,5 +323,12 @@ const styles = StyleSheet.create({
     right: 60,
     bottom: 12,
 
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
 });
