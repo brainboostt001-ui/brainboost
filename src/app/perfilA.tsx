@@ -1,15 +1,21 @@
 import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Link, router } from "expo-router";
 import { DrawerToggleButton } from "@react-navigation/drawer"
+import { servicos } from '../servicos';
 
 const home2 = require('../img/home2.png');
 
 export default function PerfilAluno() {
   
   const handleHomePress = () => {
-    
     router.push('../homeA'); 
   };
+
+  const logoutAluno = async () => {
+    const response = await servicos.logoutUsuario()
+    if (!response.success) return
+    router.replace('/loginA')
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -53,7 +59,7 @@ export default function PerfilAluno() {
           <Text style={styles.buttonText}>Sobre nós</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={logoutAluno}>
           <Text style={styles.buttonText}>Fazer logout</Text>
         </TouchableOpacity>
 
