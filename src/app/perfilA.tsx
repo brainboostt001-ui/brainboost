@@ -1,11 +1,47 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { Link, router } from "expo-router";
 import { DrawerToggleButton } from "@react-navigation/drawer"
 import { servicos } from '../servicos';
+import { useEffect, useState } from 'react';
 
 const home2 = require('../img/home2.png');
 
 export default function PerfilAluno() {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    carregarDadosAluno();
+  }, []);
+
+  const carregarDadosAluno = async () => {
+    try {
+      setLoading(true);
+      const user = await servicos.getUsuarioAtual();
+      
+      if (!user || !user.id) {
+        setLoading(false);
+        return;
+      }
+
+      const respostaAluno = await servicos.buscarComFiltros('alunos', { user_id: user.id });
+      
+      if (respostaAluno.success && respostaAluno.data && respostaAluno.data.length > 0) {
+        const aluno = respostaAluno.data[0];
+        setNome(aluno.nome || '');
+        setEmail(aluno.email || user.email || '');
+      } else {
+        // Se não encontrar na tabela, usa os dados do auth
+        setNome(user.user_metadata?.nome || '');
+        setEmail(user.email || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do aluno:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleHomePress = () => {
     router.push('../homeA'); 
@@ -44,8 +80,14 @@ export default function PerfilAluno() {
           
         
 
-        <Text>Aluno1</Text>
-        <Text>aluno1@gmail.com</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#000428" />
+        ) : (
+          <>
+            <Text>{nome || 'Aluno'}</Text>
+            <Text>{email || 'email@exemplo.com'}</Text>
+          </>
+        )}
 
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Configuração</Text>

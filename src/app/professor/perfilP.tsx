@@ -1,11 +1,41 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { Link, router } from "expo-router";
 import { DrawerToggleButton } from "@react-navigation/drawer"
 import { servicos } from '@/src/servicos';
+import { useEffect, useState } from 'react';
 
 const home2 = require('../../img/home2.png');
 
 export default function PerfilProfessor() {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    carregarDadosProfessor();
+  }, []);
+
+  const carregarDadosProfessor = async () => {
+    try {
+      setLoading(true);
+      const user = await servicos.getUsuarioAtual();
+      
+      if (!user || !user.id) {
+        setLoading(false);
+        return;
+      }
+
+      if (user) {
+        setNome(user.user_metadata?.nome || '');
+        setEmail(user.email || '');
+      }
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados do professor:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleHomePress = () => {
     router.push('./homeP'); 
@@ -40,8 +70,14 @@ export default function PerfilProfessor() {
           </View>
         </View>  
 
-        <Text>Professor1</Text>
-        <Text>professor1@gmail.com</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#000428" />
+        ) : (
+          <>
+            <Text>{nome || 'Professor'}</Text>
+            <Text>{email || 'email@exemplo.com'}</Text>
+          </>
+        )}
 
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Configuração</Text>
