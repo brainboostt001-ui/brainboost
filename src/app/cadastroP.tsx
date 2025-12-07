@@ -177,7 +177,7 @@ export default function CadastroProfessor() {
           </TouchableOpacity>
         </View>
         
-        <Link href='../loginA' asChild>
+        <Link href='../loginP' asChild>
           <TouchableOpacity >
              <View>
                 <Text style={styles.cadastro}>Já tenho login</Text>

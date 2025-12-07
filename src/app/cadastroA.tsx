@@ -1,6 +1,7 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Link, router } from "expo-router";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { servicos } from '../servicos';
 
 const seta = require('../img/seta.png');
 const google = require('../img/google.png');
@@ -9,6 +10,12 @@ const olhoFechado = require('../img/olho-fechado.png');
 
 export default function CadastroAluno() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmaSenha, setConfirmaSenha] = useState('');
+  const [travaEntrar, setTravaEntrar] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const toggleMostrarSenha = () => {
     setMostrarSenha(!mostrarSenha);
@@ -21,6 +28,60 @@ export default function CadastroAluno() {
       router.replace('/'); 
     }
   };
+
+  const cadastrarAluno = async () => {
+    if (!nome || !email || !senha || !confirmaSenha) {
+      Alert.alert('Atenção', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (senha !== confirmaSenha) {
+      Alert.alert('Atenção', 'As senhas não coincidem');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const resposta = await servicos.cadastrarUsuario(email, senha, 'A', nome);
+
+      if (resposta.success) {
+        Alert.alert(
+          'Sucesso!',
+          'Aluno cadastrado com sucesso!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Redirecionar para a tela de login
+                router.replace('/loginA');
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Erro ao Cadastrar',
+          resposta.error || 'Ocorreu um erro ao cadastrar o aluno. Tente novamente.'
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Erro ao Cadastrar',
+        error.message || 'Ocorreu um erro inesperado. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!nome || !email || !senha || !confirmaSenha || senha !== confirmaSenha) {
+      setTravaEntrar(true)
+    } else {
+      setTravaEntrar(false)
+    }
+  }, [nome, email, senha, confirmaSenha])
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -40,6 +101,17 @@ export default function CadastroAluno() {
         </View>
 
         <View style={styles.formContainer}>
+          <Text style={styles.label}>Nome</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu nome"
+            placeholderTextColor="#999"
+            autoCapitalize="words"
+            onChangeText={nome => setNome(nome)}
+            value={nome}
+          />
+          
           <Text style={styles.label}>Email</Text>
           
           <TextInput
@@ -48,6 +120,8 @@ export default function CadastroAluno() {
             placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
+            onChangeText={email => setEmail(email)}
+            value={email}
           />
           
           <Text style={styles.label}>Senha</Text>
@@ -57,6 +131,8 @@ export default function CadastroAluno() {
               placeholder="Digite sua senha"
               placeholderTextColor="#999"
               secureTextEntry={!mostrarSenha}
+              onChangeText={senha => setSenha(senha)}
+              value={senha}
             />
             <TouchableOpacity 
               style={styles.olhoButton} 
@@ -75,10 +151,20 @@ export default function CadastroAluno() {
             placeholder="Digite sua senha"
             placeholderTextColor="#999"
             secureTextEntry={true}
+            onChangeText={senha => setConfirmaSenha(senha)}
+            value={confirmaSenha}
           />
 
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
+          <TouchableOpacity
+            style={[styles.button, (travaEntrar || loading) && styles.buttonDisabled]}
+            onPress={cadastrarAluno}
+            disabled={travaEntrar || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
 
           <View>
@@ -116,7 +202,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: -50, 
     right: -50, 
-    height: 100, 
+    height: 110, 
     backgroundColor: '#000428',
     flex: 1,
   },
@@ -127,7 +213,7 @@ const styles = StyleSheet.create({
   },
   setaContainer: {
     position: 'absolute',
-    top: 10,
+    top: 18,
     left: 30,
     marginTop: 40,
     zIndex: 1,
@@ -207,6 +293,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 30,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: 'white',

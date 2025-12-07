@@ -1,6 +1,7 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Link, router } from "expo-router";
 import { useState } from 'react';
+import { servicos } from '../servicos';
 
 const seta = require('../img/seta.png');
 const olhoAberto = require('../img/olho-aberto.png'); 
@@ -9,14 +10,56 @@ const google = require('../img/google.png');
 
 export default function LoginAluno() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [loading, setLoading] = useState(false);
 
- 
 
-  
   const toggleMostrarSenha = () => {
     setMostrarSenha(!mostrarSenha);
   };
+
+  const loginAluno = async () => {
+    if (!email || !senha) {
+      Alert.alert('Atenção', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const resposta = await servicos.loginUsuario(email, senha);
+
+      if (resposta.success && resposta.data?.user) {
+        const userType = resposta.data.user.user_metadata?.type;
+
+        if (userType !== 'A') {
+          await servicos.logoutUsuario();
+          Alert.alert(
+            'Acesso Negado',
+            'Este login é apenas para alunos. Por favor, use a tela de login de professor.'
+          );
+          router.replace('/loginP')
+          setLoading(false);
+          return;
+        }
+
+        router.replace('/homeA');
+      } else {
+        Alert.alert(
+          'Erro no Login',
+          'Credenciais inválidas. Verifique seu email e senha.'
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Erro no Login',
+        error.message || 'Ocorreu um erro inesperado. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -52,6 +95,9 @@ export default function LoginAluno() {
             placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
           />
 
           <Text style={styles.label}>Senha</Text>
@@ -61,6 +107,9 @@ export default function LoginAluno() {
               placeholder="Digite sua senha"
               placeholderTextColor="#999"
               secureTextEntry={!mostrarSenha}
+              value={senha}
+              onChangeText={setSenha}
+              editable={!loading}
             />
             <TouchableOpacity 
               style={styles.olhoButton} 
@@ -73,8 +122,16 @@ export default function LoginAluno() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Entrar</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={loginAluno}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
 
           
@@ -151,6 +208,7 @@ const styles = StyleSheet.create({
     fontSize: windowHeight * 0.03,
     textAlign: 'center',
     fontWeight: 'bold',
+    left: 3,
   },
   formContainer: {
     width: '100%',
@@ -179,6 +237,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 15,
   },
   
   inputSenha: {
@@ -212,6 +271,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonText: {
     color: 'white',
     fontSize: 18,
@@ -226,6 +288,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textDecorationLine: 'underline',
     color: '#000428',
+    textAlign: 'center',
   },
   buttonGoogle: {
     color: '#000428',

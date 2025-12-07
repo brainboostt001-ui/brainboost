@@ -31,9 +31,7 @@ export default function LoginProfessor() {
       const resposta = await servicos.loginUsuario(email, senha);
 
       if (resposta.success && resposta.data?.user) {
-        // Verificar o tipo do usuário
         const userType = resposta.data.user.user_metadata?.type;
-        console.log('userType ->', userType);
 
         if (userType !== 'P') {
           await servicos.logoutUsuario();

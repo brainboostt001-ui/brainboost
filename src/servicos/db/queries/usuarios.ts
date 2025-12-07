@@ -31,6 +31,37 @@ export async function cadastrarUsuario(email: string, password: string, type?: s
     return { success: false, error: error.message };
   }
 
+  if (data.user && data.user.id && type === 'A') {
+    try {
+      const { error: insertError } = await supabase
+        .from('alunos')
+        .insert([
+          {
+            user_id: data.user.id,
+            email: email,
+            nome: nome || '',
+            created_at: new Date().toISOString(),
+          }
+        ]);
+
+      if (insertError) {
+        console.error('Erro ao inserir aluno na tabela:', insertError.message);
+        return { 
+          success: true, 
+          data,
+          warning: 'Usuário criado, mas houve erro ao salvar na tabela alunos: ' + insertError.message 
+        };
+      }
+    } catch (err: any) {
+      console.error('Erro ao inserir aluno na tabela:', err.message);
+      return { 
+        success: true, 
+        data,
+        warning: 'Usuário criado, mas houve erro ao salvar na tabela alunos' 
+      };
+    }
+  }
+
   return { success: true, data };
 }
 
