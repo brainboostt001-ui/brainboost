@@ -1,9 +1,45 @@
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Dimensions, TextInput, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { Link, router } from "expo-router";
 import { DrawerToggleButton } from "@react-navigation/drawer"
+import { useEffect, useState } from 'react';
+import { servicos } from '../../servicos';
+
+interface Aluno {
+  id: string | number;
+  nome: string;
+  email: string;
+  user_id?: string;
+  created_at?: string;
+}
 
 export default function Turma() {
-  
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    buscarAlunos();
+  }, []);
+
+  const buscarAlunos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const resposta = await servicos.buscarTodos('alunos');
+      
+      if (resposta.success && resposta.data) {
+        setAlunos(resposta.data);
+      } else {
+        setError(resposta.error || 'Erro ao buscar alunos');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erro ao buscar alunos');
+      console.error('Erro ao buscar alunos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       
@@ -37,28 +73,30 @@ export default function Turma() {
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={true}
         >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#000428" />
+              <Text style={styles.loadingText}>Carregando alunos...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={buscarAlunos}>
+                <Text style={styles.retryButtonText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : alunos.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Nenhum aluno cadastrado</Text>
+            </View>
+          ) : (
+            alunos.map((aluno) => (
+              <View key={aluno.id} style={styles.card}>
+                <Text style={styles.cardText}>{aluno.nome || 'Sem nome'}</Text>
+              </View>
+            ))
+          )}
 
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Julio Cezar</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Jhonata Rodrigues</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Paulo Eduardo</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Thomas Souza</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Jackson Vitor</Text>
-          </View>
-
-         
           <View style={styles.bottomSpacing} />
         </ScrollView>
 
@@ -213,5 +251,51 @@ const styles = StyleSheet.create({
 
   bottomSpacing: {
     height: 20, 
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#d32f2f',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#000428',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });
